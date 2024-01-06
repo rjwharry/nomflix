@@ -40,6 +40,7 @@ const Overview = styled.p`
 
 const Slider = styled.div`
   position: relative;
+  top: -250px;
 `;
 
 const Row = styled(motion.div)`
@@ -48,7 +49,6 @@ const Row = styled(motion.div)`
   grid-template-columns: repeat(6, 1fr);
   position: absolute;
   width: 100%;
-  overflow-x: hidden;
 `;
 
 const Box = styled(motion.div)<{ bgPhoto: string }>`
@@ -57,8 +57,25 @@ const Box = styled(motion.div)<{ bgPhoto: string }>`
   background-size: cover;
   background-position: center center;
   height: 200px;
-  color: red;
-  font-size: 66px;
+  &:last-child {
+    transform-origin: center right;
+  }
+  &:first-child {
+    transform-origin: center left;
+  }
+`;
+
+const Info = styled(motion.div)`
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.lighter};
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
 `;
 
 const rowVariants: Variants = {
@@ -70,6 +87,27 @@ const rowVariants: Variants = {
   },
   exit: {
     x: -window.innerWidth,
+  },
+};
+
+const boxVariants: Variants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    scale: 1.3,
+    transition: {
+      delay: 0.5,
+    },
+  },
+};
+
+const infoVariants: Variants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+    },
   },
 };
 
@@ -124,8 +162,19 @@ function Home() {
                   .map((movie) => (
                     <Box
                       key={movie.id}
+                      whileHover="hover"
+                      initial="normal"
+                      variants={boxVariants}
+                      transition={{
+                        type: 'tween',
+                        duration: 0.2,
+                      }}
                       bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
-                    />
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
                   ))}
               </Row>
             </AnimatePresence>
