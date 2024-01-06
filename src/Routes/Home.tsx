@@ -49,12 +49,6 @@ const Row = styled(motion.div)`
   grid-template-columns: repeat(6, 1fr);
   position: absolute;
   width: 100%;
-  &:first-child {
-    transform-origin: center left;
-  }
-  &:last-child {
-    transform-origin: center right;
-  }
 `;
 
 const Box = styled(motion.div)<{ bgPhoto: string }>`
