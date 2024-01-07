@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { IGetMoviesResult, getMovies } from '../api';
 import styled from 'styled-components';
 import { makeImagePath } from '../utils';
-import { AnimatePresence, Variants, motion } from 'framer-motion';
+import { AnimatePresence, Variants, motion, useScroll } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate, useMatch } from 'react-router-dom';
 import MovieDetail from '../Components/MovieDetail';
@@ -118,6 +118,7 @@ const offset = 6;
 function Home() {
   const navigate = useNavigate();
   const movieDetailMatch = useMatch('/movies/:movieId');
+  const { scrollY } = useScroll();
   const { data, isLoading } = useQuery<IGetMoviesResult>({
     queryKey: ['movies', 'now playing'],
     queryFn: getMovies,
@@ -194,7 +195,9 @@ function Home() {
             </AnimatePresence>
           </Slider>
           <AnimatePresence>
-            {movieDetailMatch ? <MovieDetail movie={detailMovie} /> : null}
+            {movieDetailMatch ? (
+              <MovieDetail movie={detailMovie} scrollY={scrollY.get()} />
+            ) : null}
           </AnimatePresence>
         </>
       )}

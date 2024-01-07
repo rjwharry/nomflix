@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { makeImagePath } from '../utils';
 import { IMovie } from '../api';
-import { motion, useScroll } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Overlay = styled(motion.div)`
@@ -51,11 +51,11 @@ const MovieDetailOverview = styled.p`
 
 interface MovieDetailProps {
   movie: IMovie | undefined;
+  scrollY: number;
 }
 
 function MovieDetail({ movie }: MovieDetailProps) {
   const navigate = useNavigate();
-  const { scrollY } = useScroll();
   const onOverlayClick = () => navigate('/');
   return (
     <>
@@ -67,7 +67,7 @@ function MovieDetail({ movie }: MovieDetailProps) {
       <MovieDetailModal
         layoutId={movie?.id + ''}
         style={{
-          top: scrollY.get() + 50,
+          top: scrollY + 50,
         }}
       >
         {movie && (
