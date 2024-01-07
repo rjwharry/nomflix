@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { IGetMoviesResult, getMovies } from '../api';
 import styled from 'styled-components';
 import { makeImagePath } from '../utils';
-import { AnimatePresence, Variants, motion } from 'framer-motion';
+import { AnimatePresence, Variants, motion, useScroll } from 'framer-motion';
 import { useState } from 'react';
+import { useHistory, useRouteMatch } from 'react-router-dom';
 
 const Wrapper = styled.div`
   background: black;
@@ -78,6 +79,51 @@ const Info = styled(motion.div)`
   }
 `;
 
+const Overlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+`;
+
+const MovieDetailModal = styled(motion.div)`
+  position: absolute;
+  width: 40vw;
+  height: 80vh;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  background-color: ${(props) => props.theme.black.lighter};
+  border-radius: 15px;
+  overflow: hidden;
+`;
+
+const MovieDetailCover = styled.div<{ bgImage?: string }>`
+  width: 100%;
+  height: 300px;
+  background-image: linear-gradient(0deg, black, transparent),
+    url(${(props) => props.bgImage});
+  background-size: cover;
+  background-position: center center;
+`;
+
+const MovieDetailBody = styled.div`
+  color: ${(props) => props.theme.white.lighter};
+  position: relative;
+  top: -40px;
+`;
+
+const MovieDetailTitle = styled.h2`
+  font-size: 36px;
+  padding-left: 20px;
+`;
+
+const MovieDetailOverview = styled.p`
+  padding: 20px;
+`;
+
 const rowVariants: Variants = {
   hidden: {
     x: window.innerWidth,
@@ -114,10 +160,13 @@ const infoVariants: Variants = {
 const offset = 6;
 
 function Home() {
+  const history = useHistory();
+  const movieModal = useRouteMatch<{ movieId: string }>('/movies/:movieId');
   const { data, isLoading } = useQuery<IGetMoviesResult>({
     queryKey: ['movies', 'now playing'],
     queryFn: getMovies,
   });
+  const { scrollY } = useScroll();
   const [idx, setIdx] = useState(0);
   const [sliderLeaving, setSliderLeaving] = useState(false);
   const increaseIdx = () => {
@@ -130,6 +179,13 @@ function Home() {
     toggleSliderLeaving();
   };
   const toggleSliderLeaving = () => setSliderLeaving((prev) => !prev);
+  const onBoxClick = (movieId: number) => {
+    history.push(`/movies/${movieId}`);
+  };
+  const onOverlayClick = () => history.push('/');
+  const detailMovie =
+    movieModal?.params.movieId &&
+    data?.results.find((movie) => movie.id + '' === movieModal?.params.movieId);
   return (
     <Wrapper>
       {isLoading ? (
@@ -162,6 +218,8 @@ function Home() {
                   .map((movie) => (
                     <Box
                       key={movie.id}
+                      layoutId={movie.id + ''}
+                      onClick={() => onBoxClick(movie.id)}
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
@@ -179,6 +237,40 @@ function Home() {
               </Row>
             </AnimatePresence>
           </Slider>
+          <AnimatePresence>
+            {movieModal ? (
+              <>
+                <Overlay
+                  onClick={onOverlayClick}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+                <MovieDetailModal
+                  layoutId={movieModal?.params.movieId}
+                  style={{
+                    top: scrollY.get() + 50,
+                  }}
+                >
+                  {detailMovie && (
+                    <>
+                      <MovieDetailCover
+                        bgImage={makeImagePath(
+                          detailMovie.backdrop_path,
+                          'w500'
+                        )}
+                      />
+                      <MovieDetailBody>
+                        <MovieDetailTitle>{detailMovie.title}</MovieDetailTitle>
+                        <MovieDetailOverview>
+                          {detailMovie.overview}
+                        </MovieDetailOverview>
+                      </MovieDetailBody>
+                    </>
+                  )}
+                </MovieDetailModal>
+              </>
+            ) : null}
+          </AnimatePresence>
         </>
       )}
     </Wrapper>
