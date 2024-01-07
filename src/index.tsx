@@ -1,10 +1,10 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { RecoilRoot } from 'recoil';
 import { theme } from './theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router-dom';
+import router from './Router';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300&display=swap');
@@ -53,7 +53,7 @@ const GlobalStyle = createGlobalStyle`
   }
   body {
     font-family: 'Source Sans 3', sans-serif;
-    /* background-color: ${(props) => props.theme.bgColor}; */
+    background-color: ${(props) => props.theme.black.darker};
     color: ${(props) => props.theme.white.darker};
     overflow-x: hidden;
   }
@@ -80,7 +80,7 @@ root.render(
     <QueryClientProvider client={client}>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        <App />
+        <RouterProvider router={router}></RouterProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </RecoilRoot>
