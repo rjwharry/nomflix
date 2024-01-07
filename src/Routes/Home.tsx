@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { makeImagePath } from '../utils';
 import { AnimatePresence, Variants, motion, useScroll } from 'framer-motion';
 import { useState } from 'react';
-import { useHistory, useRouteMatch } from 'react-router-dom';
+import { useNavigate, useMatch } from 'react-router-dom';
 
 const Wrapper = styled.div`
   background: black;
@@ -160,8 +160,8 @@ const infoVariants: Variants = {
 const offset = 6;
 
 function Home() {
-  const history = useHistory();
-  const movieModal = useRouteMatch<{ movieId: string }>('/movies/:movieId');
+  const navigate = useNavigate();
+  const movieModal = useMatch('/movies/:movieId');
   const { data, isLoading } = useQuery<IGetMoviesResult>({
     queryKey: ['movies', 'now playing'],
     queryFn: getMovies,
@@ -180,9 +180,9 @@ function Home() {
   };
   const toggleSliderLeaving = () => setSliderLeaving((prev) => !prev);
   const onBoxClick = (movieId: number) => {
-    history.push(`/movies/${movieId}`);
+    navigate(`/movies/${movieId}`);
   };
-  const onOverlayClick = () => history.push('/');
+  const onOverlayClick = () => navigate('/');
   const detailMovie =
     movieModal?.params.movieId &&
     data?.results.find((movie) => movie.id + '' === movieModal?.params.movieId);
