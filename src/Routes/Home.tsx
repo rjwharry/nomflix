@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { IGetMoviesResult, getMovies } from '../api';
+import { IGetMoviesResult, getMovies } from '../api/movie';
 import styled from 'styled-components';
 import { makeImagePath } from '../utils';
 import { AnimatePresence, Variants, motion, useScroll } from 'framer-motion';
 import { useState } from 'react';
 import { useNavigate, useMatch } from 'react-router-dom';
+import MovieDetail from '../Components/MovieDetail';
+import { IGenreResult, getGenres } from '../api/genre';
 
 const Wrapper = styled.div`
   background: black;
@@ -18,14 +20,11 @@ const Loader = styled.div`
   justify-content: center;
 `;
 
-const Banner = styled.div<{ bgImage: string }>`
+const Banner = styled.div<{ bgimage: string }>`
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 60px;
+  padding: 10% 60px 60px 60px;
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
-    url(${(props) => props.bgImage});
+    url(${(props) => props.bgimage});
   background-size: cover;
 `;
 
@@ -41,7 +40,7 @@ const Overview = styled.p`
 
 const Slider = styled.div`
   position: relative;
-  top: -250px;
+  top: -20%;
 `;
 
 const Row = styled(motion.div)`
@@ -52,17 +51,30 @@ const Row = styled(motion.div)`
   width: 100%;
 `;
 
-const Box = styled(motion.div)<{ bgPhoto: string }>`
+const Box = styled(motion.div)<{ bgphoto: string }>`
   background-color: white;
-  background-image: url(${(props) => props.bgPhoto});
+  background-image: url(${(props) => props.bgphoto});
   background-size: cover;
   background-position: center center;
+  display: flex;
+  align-items: center;
   height: 200px;
   &:last-child {
     transform-origin: center right;
   }
   &:first-child {
     transform-origin: center left;
+  }
+`;
+
+const BoxTitle = styled.div`
+  padding: 10px;
+  background: transparent;
+  width: 100%;
+  h4 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bolder;
   }
 `;
 
@@ -73,55 +85,18 @@ const Info = styled(motion.div)`
   position: absolute;
   width: 100%;
   bottom: 0;
-  h4 {
-    text-align: center;
-    font-size: 18px;
-  }
+  display: flex;
+  justify-content: space-between;
 `;
 
-const Overlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0;
+const GenreUl = styled.ul`
+  display: block;
+  list-style-type: square;
 `;
-
-const MovieDetailModal = styled(motion.div)`
-  position: absolute;
-  width: 40vw;
-  height: 80vh;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  background-color: ${(props) => props.theme.black.lighter};
-  border-radius: 15px;
-  overflow: hidden;
-`;
-
-const MovieDetailCover = styled.div<{ bgImage?: string }>`
-  width: 100%;
-  height: 300px;
-  background-image: linear-gradient(0deg, black, transparent),
-    url(${(props) => props.bgImage});
-  background-size: cover;
-  background-position: center center;
-`;
-
-const MovieDetailBody = styled.div`
-  color: ${(props) => props.theme.white.lighter};
-  position: relative;
-  top: -40px;
-`;
-
-const MovieDetailTitle = styled.h2`
-  font-size: 36px;
-  padding-left: 20px;
-`;
-
-const MovieDetailOverview = styled.p`
-  padding: 20px;
+const GenreItem = styled.li`
+  margin-right: 10px;
+  display: inline-block;
+  font-size: 13px;
 `;
 
 const rowVariants: Variants = {
@@ -141,7 +116,7 @@ const boxVariants: Variants = {
     scale: 1,
   },
   hover: {
-    scale: 1.3,
+    scale: 1.5,
     transition: {
       delay: 0.5,
     },
@@ -161,12 +136,16 @@ const offset = 6;
 
 function Home() {
   const navigate = useNavigate();
-  const movieModal = useMatch('/movies/:movieId');
+  const movieDetailMatch = useMatch('/movies/:movieId');
+  const { scrollY } = useScroll();
   const { data, isLoading } = useQuery<IGetMoviesResult>({
     queryKey: ['movies', 'now playing'],
-    queryFn: getMovies,
+    queryFn: () => getMovies(),
   });
-  const { scrollY } = useScroll();
+  const { data: genreList } = useQuery<IGenreResult>({
+    queryKey: ['genre', 'list'],
+    queryFn: () => getGenres(),
+  });
   const [idx, setIdx] = useState(0);
   const [sliderLeaving, setSliderLeaving] = useState(false);
   const increaseIdx = () => {
@@ -182,10 +161,11 @@ function Home() {
   const onBoxClick = (movieId: number) => {
     navigate(`/movies/${movieId}`);
   };
-  const onOverlayClick = () => navigate('/');
-  const detailMovie =
-    movieModal?.params.movieId &&
-    data?.results.find((movie) => movie.id + '' === movieModal?.params.movieId);
+  const detailMovie = movieDetailMatch?.params.movieId
+    ? data?.results.find(
+        (movie) => movie.id + '' === movieDetailMatch?.params.movieId
+      )
+    : undefined;
   return (
     <Wrapper>
       {isLoading ? (
@@ -194,7 +174,7 @@ function Home() {
         <>
           <Banner
             onClick={increaseIdx}
-            bgImage={makeImagePath(data?.results[0].backdrop_path || '')}
+            bgimage={makeImagePath(data?.results[0].backdrop_path || '')}
           >
             <Title>{data?.results[0].title}</Title>
             <Overview>{data?.results[0].overview}</Overview>
@@ -227,10 +207,23 @@ function Home() {
                         type: 'tween',
                         duration: 0.2,
                       }}
-                      bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
+                      bgphoto={makeImagePath(movie.backdrop_path, 'w500')}
                     >
-                      <Info variants={infoVariants}>
+                      <BoxTitle>
                         <h4>{movie.title}</h4>
+                      </BoxTitle>
+                      <Info variants={infoVariants}>
+                        <GenreUl>
+                          {movie.genre_ids.map((id) => (
+                            <GenreItem key={id}>
+                              {
+                                genreList?.genres.find(
+                                  (genre) => genre.id === id
+                                )?.name
+                              }
+                            </GenreItem>
+                          ))}
+                        </GenreUl>
                       </Info>
                     </Box>
                   ))}
@@ -238,37 +231,8 @@ function Home() {
             </AnimatePresence>
           </Slider>
           <AnimatePresence>
-            {movieModal ? (
-              <>
-                <Overlay
-                  onClick={onOverlayClick}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                />
-                <MovieDetailModal
-                  layoutId={movieModal?.params.movieId}
-                  style={{
-                    top: scrollY.get() + 50,
-                  }}
-                >
-                  {detailMovie && (
-                    <>
-                      <MovieDetailCover
-                        bgImage={makeImagePath(
-                          detailMovie.backdrop_path,
-                          'w500'
-                        )}
-                      />
-                      <MovieDetailBody>
-                        <MovieDetailTitle>{detailMovie.title}</MovieDetailTitle>
-                        <MovieDetailOverview>
-                          {detailMovie.overview}
-                        </MovieDetailOverview>
-                      </MovieDetailBody>
-                    </>
-                  )}
-                </MovieDetailModal>
-              </>
+            {movieDetailMatch ? (
+              <MovieDetail movieId={detailMovie?.id} scrollY={scrollY.get()} />
             ) : null}
           </AnimatePresence>
         </>
