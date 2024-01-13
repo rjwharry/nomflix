@@ -122,6 +122,16 @@ const MovieDetailOverview = styled.div`
   min-height: 70px;
 `;
 
+const Svg = styled(motion.svg)`
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  opacity: 1;
+  cursor: pointer;
+`;
+
 interface MovieDetailProps {
   movieId: number | undefined;
   scrollY: number;
@@ -129,7 +139,7 @@ interface MovieDetailProps {
 
 function MovieDetail({ movieId, scrollY }: MovieDetailProps) {
   const navigate = useNavigate();
-  const onOverlayClick = () => navigate('/');
+  const closeModal = () => navigate('/');
   const { data: movie, isLoading } = useQuery<IMovieDetail>({
     queryKey: ['movie', 'detail'],
     queryFn: () => getMovieDetail(movieId ?? 0),
@@ -141,7 +151,7 @@ function MovieDetail({ movieId, scrollY }: MovieDetailProps) {
       ) : (
         <>
           <Overlay
-            onClick={onOverlayClick}
+            onClick={closeModal}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
@@ -189,6 +199,26 @@ function MovieDetail({ movieId, scrollY }: MovieDetailProps) {
                 </MovieDetailBody>
               </>
             )}
+            <Svg
+              initial={{ opacity: 1 }}
+              whileHover={{
+                opacity: 0.6,
+              }}
+              onClick={closeModal}
+              data-slot="icon"
+              fill="none"
+              stroke-width="1.5"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              ></path>
+            </Svg>
           </MovieDetailModal>
         </>
       )}
